@@ -11,8 +11,12 @@ export const clerkWebhooks = async (req, res) => {
       "svix-signature": req.headers["svix-signature"],
     };
 
-    whook.verify(JSON.stringify(req.body), headers);
-    const { data, type } = req.body;
+    // req.body غايتستقبل كـ Buffer حيت استعملنا express.raw
+    const payload = req.body.toString();
+
+    // التحقق بواسطة الـ raw payload
+    const evt = whook.verify(payload, headers);
+    const { data, type } = evt;
 
     if (type === "user.created") {
       const userData = {
@@ -23,12 +27,11 @@ export const clerkWebhooks = async (req, res) => {
         image: data.image_url,
       };
 
-      await prisma.user.create({
-        data: userData,
-      });
-
+      await prisma.user.create({ data: userData });
       return res.json({ success: true, message: "User created successfully" });
-    } else if (type === "user.updated") {
+    }
+
+    if (type === "user.updated") {
       const userData = {
         email: data.email_addresses[0].email_address,
         username:
@@ -40,13 +43,13 @@ export const clerkWebhooks = async (req, res) => {
         where: { id: data.id },
         data: userData,
       });
-
       return res.json({ success: true, message: "User updated successfully" });
-    } else if (type === "user.deleted") {
+    }
+
+    if (type === "user.deleted") {
       await prisma.user.delete({
         where: { id: data.id },
       });
-
       return res.json({ success: true, message: "User deleted successfully" });
     }
 
