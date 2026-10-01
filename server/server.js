@@ -7,14 +7,10 @@ import { clerkWebhooks } from "./controllers/clerkWebhooks.js";
 const app = express();
 app.use(cors());
 
-app.post(
-  "/api/clerk",
-  express.raw({ type: "application/json" }),
-  clerkWebhooks,
-);
-
 app.use(express.json());
 app.use(clerkMiddleware());
+
+app.post("/api/clerk", clerkWebhooks);
 
 app.get("/", (req, res) => res.send("API IS WORKING"));
 
